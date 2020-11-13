@@ -1,1 +1,0 @@
-Procfile gunicorn app:server

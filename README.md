@@ -108,6 +108,14 @@ Target: SP.DYN.IMRT.FE.IN for 2018.
 |SH.IMM.IDPT|Immunization, DPT (% of children ages 12-23 months)|
 
 
+## Conclusions and Recommendations
+
+With the Dashboard tool in place, we can further explore the effects of family leave (i.e. maternity leave, home care leave, paternity leave, etc.) on society. The Dashboard is available to any user to explore. Specifically, it is clear that many countries have in place good family leave policies, and the United States could follow suit.
+
+**Next Steps:**
+
+Continue to explore how family leave policies positively affect society at various levels, i.e. health, development, economic, quality of life, employment rate, etc. Add other functions to the Dashboard Tool.
+
 
 **Resources:**
 

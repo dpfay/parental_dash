@@ -65,22 +65,25 @@ temp = df_gR.iloc[qsi, :].copy().reset_index(drop = True)
 #app layout
 app.layout = html.Div(
     id = 'root',
+    style = {'background' : 'rgba(235, 232, 229, 1)', 'color' : 'CadetBlue'},
     children = [
         html.Div(
             id = 'header',
+            style = {'color' : 'DimGray'},
             children = [
-                html.H4(children = 'parental leave dashboard')
+                html.H1(children = 'parental leave and health')
             ]
         ),
         html.Div(
             id = 'app-container',
-            style = {'display' : 'flex', 'flex-direction' : 'column'},
+            style = {'display' : 'flex', 'flex-direction' : 'column', 'background' : 'rgba(235, 232, 229, 1)'},
             children = [
                 html.Div(
                     id = 'upper',
                     style = {
                         'display' : 'flex',
-                        'flex-direction' : 'row'
+                        'flex-direction' : 'row',
+                        'background_color' : 'rgba(221, 212, 202, 1)'
                     },
                     children = [
                         html.Div(
@@ -88,19 +91,23 @@ app.layout = html.Div(
                             style = {
                                 'display' : 'flex',
                                 'flex-direction' : 'column',
+                                'background_color' : 'rgba(235, 232, 229, 1)',
                                 'width' : '65%'
                             },
                             children = [
                                 html.Div(
                                     id = 'selector-container',
+                                    style = {'background' : 'rgba(235, 232, 229, 1)'},
                                     children = [
                                         dcc.Dropdown(
                                             id = 'metric-selection',
+                                            style = {'background_color' : 'rgba(235, 232, 229, 1)'},
                                             options = [
-                                                {'label' : temp.loc[i, 'indicator_name'], 'value' : temp.loc[i, 'series_code']}
+                                                {'label' : temp.loc[i, 'indicator_name'], 'value' : temp.loc[i, 'series_code']}\
                                                 for i in range(len(temp)) if 'GDP' not in temp.loc[i, 'series_code']
-                                            ],
-                                            value = 'SH.PAR.LEVE.AL'
+                                            ] + [{'label' : 'Length of paid shared parental leave (days)', 'value' : 'SH.PAR.LEVE'},
+                                                {'label' : 'Length of paid maternity leave (days)', 'value' : 'SH.MMR.LEVE'}],
+                                            value = 'SH.MMR.LEVE'
                                         ),
                                         dcc.Slider(
                                             id = 'year-slider',
@@ -135,7 +142,8 @@ app.layout = html.Div(
                             style = {
                                 'display' : 'flex',
                                 'flex-direction' : 'column',
-                                'width' : '35%'
+                                'width' : '35%',
+                                'background_color' : 'rgba(221, 212, 202, 1)'
                             },
                             children = [
                                 html.Div(
@@ -143,6 +151,7 @@ app.layout = html.Div(
                                     children = [
                                         html.Div(
                                             id = 'up-split',
+                                            style = {'background_color' : 'rgba(212, 212, 202, 1)'},
                                             children = [
                                                 dcc.Graph(id = 'upper-g')
                                             ]
@@ -265,7 +274,7 @@ def update_map(metric, year):
     trace = go.Choropleth(
                 locations = dff['country_code'],
                 z = dff[str(year)],
-                colorscale = 'RdBu',
+                colorscale = 'Bluyl',
                 autocolorscale = False,
                 marker_line_color = 'white'
     )
@@ -277,6 +286,9 @@ def update_map(metric, year):
                     'type' : 'miller'
                 }
             },
+            geo_bgcolor = 'rgba(235, 232, 229, 1)',
+            plot_bgcolor = 'rgba(235, 232, 229, 1)',
+            paper_bgcolor = 'rgba(235, 232, 229, 1)',
             margin = {'l' : 0, 'r' : 0, 'b' : 0, 't' : 0}
         )
     }
@@ -403,8 +415,8 @@ def get_lab_fp(mapclick, yearclick):
         barmode = 'stack',
         showlegend = False,
         margin = {'l' : 32, 'r' : 0, 'b' : 0, 't' : 10},
-        plot_bgcolor = 'rgba(0,0,0,0)',
-        paper_bgcolor = 'rgba(0,0,0,0)',
+        plot_bgcolor = 'rgba(235, 232, 229, 1)',
+        paper_bgcolor = 'rgba(235, 232, 229, 1)',
         xaxis = {'visible' : False},
         yaxis = {'visible' : False},
         annotations = [{
@@ -451,8 +463,8 @@ def get_lab_fp(mapclick, yearclick):
         height = 250,
         barmode = 'stack',
         showlegend = False,
-        plot_bgcolor = 'rgba(0,0,0,0)',
-        paper_bgcolor = 'rgba(0,0,0,0)',
+        plot_bgcolor = 'rgba(235, 232, 229, 1)',
+        paper_bgcolor = 'rgba(235, 232, 229, 1)',
         margin = dict(l = 0, r = 0, t = 10, b = 0),
         xaxis = {'visible' : False},
         annotations = [{
@@ -511,8 +523,8 @@ def get_lab_fp(mapclick, yearclick):
             ))
         lab_ed.update_layout(barmode = 'stack',
             showlegend = False,
-            plot_bgcolor = 'rgba(0,0,0,0)',
-            paper_bgcolor = 'rgba(0,0,0,0)',
+            plot_bgcolor = 'rgba(235, 232, 229, 1)',
+            paper_bgcolor = 'rgba(235, 232, 229, 1)',
             height = 35,
             margin = {'l' : 32, 'r' : 0, 'b' : 0, 't' : 10},
             xaxis = {'visible' : False},
@@ -540,8 +552,8 @@ def get_lab_fp(mapclick, yearclick):
                 'showarrow' : False,
                 'font' : {'size' : 14}
             }],
-            plot_bgcolor = 'rgba(0,0,0,0)',
-            paper_bgcolor = 'rgba(0,0,0,0)'
+            plot_bgcolor = 'rgba(235, 232, 229, 1)',
+            paper_bgcolor = 'rgba(235, 232, 229, 1)'
         )
         if len(ch_yrs) > 0:
             lab_ed.update_layout(
@@ -636,8 +648,8 @@ def get_timed(metric, click):
         )
     ))
     tg.update_layout(showlegend = False,
-        plot_bgcolor = 'rgba(0,0,0,0)',
-        paper_bgcolor = 'rgba(0,0,0,0)',
+        plot_bgcolor = 'rgba(235, 232, 229, 1)',
+        paper_bgcolor = 'rgba(235, 232, 229, 1)',
         height = 325,
         margin = {'l' : 0, 'r' : 0, 'b' : 0, 't' : 10},
         xaxis = {'visible' : True},
@@ -669,14 +681,16 @@ def side_gs(metric, year):
         for i in range(10):
             ug.add_trace(go.Bar(
                 x = [yg.loc[i, 'country_name']],
-                y = [yg.loc[i, str(year)]]
+                y = [yg.loc[i, str(year)]],
+                marker_color = 'CadetBlue'
             ))
 
         lg = go.Figure()
         for i in range(10):
             lg.add_trace(go.Bar(
                 x = [ng.loc[i, 'country_name']],
-                y = [ng.loc[i, str(year)]]
+                y = [ng.loc[i, str(year)]],
+                marker_color = 'LightSlateGray'
             ))
 
     else:
@@ -687,20 +701,22 @@ def side_gs(metric, year):
         for i in range(10):
             ug.add_trace(go.Bar(
                 x = [top.loc[i, 'country_name']],
-                y = [top.loc[i, str(year)]]
+                y = [top.loc[i, str(year)]],
+                marker_color = 'CadetBlue'
             ))
 
         lg = go.Figure()
         for i in range(10):
             lg.add_trace(go.Bar(
                 x = [btm.loc[i, 'country_name']],
-                y = [btm.loc[i, str(year)]]
+                y = [btm.loc[i, str(year)]],
+                marker_color = 'LightSlateGray'
             ))
 
     ug.update_layout(
         showlegend = False,
-        plot_bgcolor = 'rgba(0,0,0,0)',
-        paper_bgcolor = 'rgba(0,0,0,0)',
+        plot_bgcolor = 'rgba(235, 232, 229, 1)',
+        paper_bgcolor = 'rgba(235, 232, 229, 1)',
         height = 295,
         margin = {'l' : 32, 'r' : 0, 'b' : 0, 't' : 75},
         xaxis = {'visible' : False},
@@ -709,8 +725,8 @@ def side_gs(metric, year):
 
     lg.update_layout(
         showlegend = False,
-        plot_bgcolor = 'rgba(0,0,0,0)',
-        paper_bgcolor = 'rgba(0,0,0,0)',
+        plot_bgcolor = 'rgba(235, 232, 229, 1)',
+        paper_bgcolor = 'rgba(235, 232, 229, 1)',
         height = 220,
         margin = {'l' : 32, 'r' : 0, 'b' : 0, 't' : 0},
         xaxis = {'visible' : False},
@@ -718,7 +734,6 @@ def side_gs(metric, year):
     )
 
     return ug, lg
-
 
 @app.callback(
     Output('country-facts', 'children'),

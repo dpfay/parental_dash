@@ -39,31 +39,10 @@ df_gR = pd.read_csv('./data/reference_codes.csv')
 
 codes = pd.read_csv('./data/un_codes.csv')
 
-#oecd
-df_o = pd.read_csv(
-    os.path.join(
-        APP_PATH, os.path.join('data', 'parental_leave_oecd.csv')
-    )
-)
-
-df_oR = pd.read_csv(
-    os.path.join(
-        APP_PATH, os.path.join('data', 'parental_leave_ref.csv')
-    )
-)
-
 #oecd time data
-df_t = pd.read_csv(
-    os.path.join(
-        APP_PATH, os.path.join('data', 'labor_indicators_oecd.csv')
-    )
-)
+df_t = pd.read_csv('./data/labor_indicators_oecd.csv')
 
-df_tR = pd.read_csv(
-    os.path.join(
-        APP_PATH, os.path.join('data', 'labor_indicators_oecd.csv')
-    )
-)
+df_tR = pd.read_csv('./data/labor_indicators_oecd.csv')
 
 #with open('./data/countries.geojson') as f:
 #    country_geo = json.load(f)
@@ -101,7 +80,7 @@ app.layout = html.Div(
                     id = 'upper',
                     style = {
                         'display' : 'flex',
-                        'height' : '60vh'
+                        'flex-direction' : 'row'
                     },
                     children = [
                         html.Div(
@@ -153,7 +132,11 @@ app.layout = html.Div(
                         ),
                         html.Div(
                             id = 'right-column',
-                            style = {'display' : 'flex', 'flex-direction' : 'column'},
+                            style = {
+                                'display' : 'flex',
+                                'flex-direction' : 'column',
+                                'width' : '35%'
+                            },
                             children = [
                                 html.Div(
                                     id = 'split-container',
@@ -161,19 +144,13 @@ app.layout = html.Div(
                                         html.Div(
                                             id = 'up-split',
                                             children = [
-                                                html.P(
-                                                    id = 'upper-text',
-                                                    children = 'upper graph goes here'
-                                                )
+                                                dcc.Graph(id = 'upper-g')
                                             ]
                                         ),
                                         html.Div(
                                             id = 'low-split',
                                             children = [
-                                                html.P(
-                                                    id = 'lower-text',
-                                                    children = 'lower graph goes here'
-                                                )
+                                                dcc.Graph(id = 'lower-g')
                                             ]
                                         )
                                     ]
@@ -203,13 +180,14 @@ app.layout = html.Div(
                         ),
                         html.Div(
                             id = 'lc',
+                            style = {
+                                'display' : 'flex',
+                                'flex-direction' : 'column',
+                                'width' : '45%'
+                            },
                             children = [
                                 html.Div(
                                     id = 'lc1',
-                                    style = {
-                                        'display' : 'flex',
-                                        'flex-direction' : 'column'
-                                    },
                                     children = [
                                         dcc.Graph(id = 'population-graph')
                                     ]
@@ -226,6 +204,25 @@ app.layout = html.Div(
                                         dcc.Graph(id = 'lfp-ed-graph')
                                     ]
                                 )
+                            ]
+                        ),
+                        html.Div(
+                            id = 'lr',
+                            style = {
+                                'display' : 'flex',
+                                'flex-direction' : 'column',
+                                'width' : '35%'
+                            },
+                            children = [
+                                dcc.Dropdown(
+                                    id = 'graph-selector',
+                                    options = [
+                                        {'label' : temp.loc[i, 'indicator_name'], 'value' : temp.loc[i, 'series_code']}
+                                        for i in range(len(temp)) if not any(x in temp.loc[i, 'series_code'] for x in ['GDP', 'SG', 'SH.MMR', 'SH.PAR'])
+                                    ],
+                                    value = 'SP.DYN.IMRT.IN'
+                                    ),
+                                dcc.Graph(id = 'time-graph')
                             ]
                         )
                     ]
@@ -307,8 +304,7 @@ def get_country(click):
 @app.callback(
     [Output('population-graph', 'figure'),
     Output('lfp-graph', 'figure'),
-    Output('lfp-ed-graph', 'figure'),
-    Output('country-facts', 'children')],
+    Output('lfp-ed-graph', 'figure')],
     [Input('world-map', 'clickData'),
     Input('lfp-graph', 'clickData')]
 )
@@ -411,6 +407,16 @@ def get_lab_fp(mapclick, yearclick):
         paper_bgcolor = 'rgba(0,0,0,0)',
         xaxis = {'visible' : False},
         yaxis = {'visible' : False},
+        annotations = [{
+            'text' : 'population',
+            'x' : 0.955,
+            'y' : 0.8,
+            'showarrow' : False,
+            'xanchor' : 'right',
+            'yanchor' : 'bottom',
+            'xref' : 'paper',
+            'yref' : 'paper'
+        }]
         )
 
 
@@ -550,7 +556,197 @@ def get_lab_fp(mapclick, yearclick):
                 }]
             )
 
-    return pop_fig, lab_fig, lab_ed, yr
+    return pop_fig, lab_fig, lab_ed
+
+@app.callback(
+    Output('time-graph', 'figure'),
+    [Input('graph-selector', 'value'),
+    Input('world-map', 'clickData')]
+)
+def get_timed(metric, click):
+    if click is not None:
+        cc = click['points'][0]['location']
+        cn = codes[codes['iso'] == cc]['country'].values[0]
+    else:
+        cn = 'France'
+        cc = 'FRA'
+
+    dpl = df_t[df_t['Country'] == cn]
+    dpl = dpl[dpl['IND'] == 'EMP18_MAT'].set_index('TIME')
+    yrs = list(dpl.index)
+
+    mat_delta = dict([])
+    for i in range(len(yrs) - 1):
+        a = dpl.loc[yrs[i], 'Value']
+        b = dpl.loc[yrs[i+1], 'Value']
+        if a != b:
+            mat_delta[yrs[i+1]] = b - a
+
+    dpl = df_t[df_t['Country'] == cn]
+    dpl = dpl[dpl['IND'] == 'EMP18_PAT'].set_index('TIME')
+    yrs = list(dpl.index)
+
+    pat_delta = dict([])
+    for i in range(len(yrs) - 1):
+        a = dpl.loc[yrs[i], 'Value']
+        b = dpl.loc[yrs[i+1], 'Value']
+        if a != b:
+            pat_delta[yrs[i+1]] = b - a
+
+    dpl = df_t[df_t['Country'] == cn]
+    dpl = dpl[dpl['IND'] == 'EMP18_PAR'].set_index('TIME')
+    yrs = list(dpl.index)
+
+    par_delta = dict([])
+    for i in range(len(yrs) - 1):
+        a = dpl.loc[yrs[i], 'Value']
+        b = dpl.loc[yrs[i+1], 'Value']
+        if a != b:
+            par_delta[yrs[i+1]] = b - a
+
+    dpl = df_t[df_t['Country'] == cn]
+    dpl = dpl[dpl['IND'] == 'EMP18_PAID'].set_index('TIME')
+    yrs = list(dpl.index)
+
+    paid_delta = dict([])
+    for i in range(len(yrs) - 1):
+        a = dpl.loc[yrs[i], 'Value']
+        b = dpl.loc[yrs[i+1], 'Value']
+        if a != b:
+            paid_delta[yrs[i+1]] = b - a
+
+    dff = df_g[df_g['country_code'] == cc]\
+        .set_index('indicator_code')\
+        .drop(columns = ['country_name', 'country_code'])
+
+    leve_delta = dict([])
+    for i in range(1970, 2019):
+        a = dff.loc['SH.PAR.LEVE.AL', str(i)]
+        b = dff.loc['SH.PAR.LEVE.AL', str(i+1)]
+        if a != b:
+            leve_delta[i + 1] = b - a
+
+    tg = go.Figure()
+    tg.add_trace(go.Scatter(
+        x = list(dff.loc[metric, :].index),
+        y = list(dff.loc[metric, :].values),
+        mode = 'lines',
+        line = dict(
+            width = 4
+        )
+    ))
+    tg.update_layout(showlegend = False,
+        plot_bgcolor = 'rgba(0,0,0,0)',
+        paper_bgcolor = 'rgba(0,0,0,0)',
+        height = 325,
+        margin = {'l' : 0, 'r' : 0, 'b' : 0, 't' : 10},
+        xaxis = {'visible' : True},
+        yaxis = {'visible' : False},)
+
+    return tg
+
+@app.callback(
+    [Output('upper-g', 'figure'),
+    Output('lower-g', 'figure')],
+    [Input('metric-selection', 'value'),
+    Input('year-slider', 'value')]
+)
+def side_gs(metric, year):
+    binaries = list(df_gR[df_gR['indicator_name'].str.contains('yes')]['series_code'])
+
+    dff = df_g[df_g['indicator_code'] == metric]
+
+    gdp = list(df_g[df_g['indicator_code'] == 'NY.GDP.MKTP.CD'].sort_values(by = str(year)).dropna()['country_code'])
+
+    if metric in binaries:
+        yes = list(dff[dff[str(year)] == 1]['country_code'])
+        no = list(dff[dff[str(year)] == 0]['country_code'])
+
+        yg = df_g[(df_g['indicator_code'] == 'NY.GDP.MKTP.CD') & (df_g['country_code'].isin(yes))].dropna().sort_values(by = str(year), ascending = False).reset_index(drop = True)
+        ng = df_g[(df_g['indicator_code'] == 'NY.GDP.MKTP.CD') & (df_g['country_code'].isin(no))].dropna().sort_values(by = str(year), ascending = False).reset_index(drop = True)
+
+        ug = go.Figure()
+        for i in range(10):
+            ug.add_trace(go.Bar(
+                x = [yg.loc[i, 'country_name']],
+                y = [yg.loc[i, str(year)]]
+            ))
+
+        lg = go.Figure()
+        for i in range(10):
+            lg.add_trace(go.Bar(
+                x = [ng.loc[i, 'country_name']],
+                y = [ng.loc[i, str(year)]]
+            ))
+
+    else:
+        top = dff[['country_name', 'country_code', str(year)]].sort_values(by = str(year), ascending = False).dropna().reset_index(drop = True)[:10]
+        btm = dff[['country_name', 'country_code', str(year)]].sort_values(by = str(year)).dropna().reset_index(drop = True)[:10]
+
+        ug = go.Figure()
+        for i in range(10):
+            ug.add_trace(go.Bar(
+                x = [top.loc[i, 'country_name']],
+                y = [top.loc[i, str(year)]]
+            ))
+
+        lg = go.Figure()
+        for i in range(10):
+            lg.add_trace(go.Bar(
+                x = [btm.loc[i, 'country_name']],
+                y = [btm.loc[i, str(year)]]
+            ))
+
+    ug.update_layout(
+        showlegend = False,
+        plot_bgcolor = 'rgba(0,0,0,0)',
+        paper_bgcolor = 'rgba(0,0,0,0)',
+        height = 295,
+        margin = {'l' : 32, 'r' : 0, 'b' : 0, 't' : 75},
+        xaxis = {'visible' : False},
+        yaxis = {'visible' : False}
+    )
+
+    lg.update_layout(
+        showlegend = False,
+        plot_bgcolor = 'rgba(0,0,0,0)',
+        paper_bgcolor = 'rgba(0,0,0,0)',
+        height = 220,
+        margin = {'l' : 32, 'r' : 0, 'b' : 0, 't' : 0},
+        xaxis = {'visible' : False},
+        yaxis = {'visible' : False}
+    )
+
+    return ug, lg
+
+
+@app.callback(
+    Output('country-facts', 'children'),
+    [Input('world-map', 'clickData')]
+)
+def get_facts(mapclick):
+    if mapclick is not None:
+        cc = mapclick['points'][0]['location']
+        cn = codes[codes['iso'] == cc]['country'].values[0]
+    else:
+        cc = 'FRA'
+        cn = 'France'
+
+    dff = df_g[df_g['country_code'] == cc]
+
+    sys = dff[dff['indicator_code'] == 'SH.PAR.LEVE.AL']['2019'].values[0]
+    mat = dff[dff['indicator_code'] == 'SH.PAR.LEVE.FE']['2019'].values[0]
+    pat = dff[dff['indicator_code'] == 'SH.PAR.LEVE.MA']['2019'].values[0]
+
+    if sys == 1:
+        facts = 'As of 2019, {} had a parental leave system in place, allowing {} days of paid leave to the mother and {} days to the father.'\
+            .format(cn, mat, pat)
+    else:
+        facts = 'As of 2019, {} did not have a national parental leave system in place.'\
+            .format(cn)
+
+    return facts
+
 #Main
 if __name__ == '__main__':
     app.run_server(debug = True)

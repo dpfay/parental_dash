@@ -70,7 +70,7 @@ app.layout = html.Div(
                     style = {
                         'display' : 'flex',
                         'flex-direction' : 'row',
-                        'background_color' : 'rgba(221, 212, 202, 1)'
+                        'background' : 'rgba(235, 232, 229, 1)'
                     },
                     children = [
                         html.Div(
@@ -78,7 +78,7 @@ app.layout = html.Div(
                             style = {
                                 'display' : 'flex',
                                 'flex-direction' : 'column',
-                                'background_color' : 'rgba(235, 232, 229, 1)',
+                                'background' : 'rgba(235, 232, 229, 1)',
                                 'width' : '65%'
                             },
                             children = [
@@ -118,8 +118,11 @@ app.layout = html.Div(
                                 ),
                                 html.Div(
                                     id = 'map-container',
+                                    style = {'background' : 'rgba(235, 232, 229, 1)'},
                                     children = [
-                                        dcc.Graph(id = 'world-map')
+                                        dcc.Graph(
+                                            id = 'world-map'
+                                        )
                                     ]
                                 )
                             ]
@@ -280,7 +283,9 @@ def update_map(metric, year):
                 autocolorscale = False,
                 colorbar = {
                     'bgcolor' : 'rgba(235, 232, 229, 1)',
-                    'x' : 1
+                    'x' : 1,
+                    'outlinewidth' : 0,
+                    'borderwidth' : 0
                 }
     )
     return {'data' : [trace],
@@ -289,7 +294,9 @@ def update_map(metric, year):
             mapbox_accesstoken = 'pk.eyJ1IjoiZHBmYXkiLCJhIjoiY2toY2hsMmVpMDh5MDJzczJhZGQ0ZWFqZyJ9.jdNjGx-xr_KqF0aFYAoSRw',
             mapbox_zoom = 0.8,
             mapbox_center = {'lat' : 17, 'lon' : 10},
-            margin = {'l' : 0, 'r' : 0, 'b' : 0, 't' : 0}
+            margin = {'l' : 0, 'r' : 0, 'b' : 0, 't' : 0},
+            plot_bgcolor = 'rgba(235, 232, 229, 1)',
+            paper_bgcolor = 'rgba(235, 232, 229, 1)',
         )
     }
 

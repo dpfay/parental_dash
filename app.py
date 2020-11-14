@@ -1,6 +1,3 @@
-import os
-import pathlib
-import re
 import json
 import math
 
@@ -28,10 +25,6 @@ app = dash.Dash(
 server = app.server
 
 
-
-#load data
-APP_PATH = str(pathlib.Path(__file__).parent.resolve())
-
 #global
 df_g = pd.read_csv('./data/selected_data.csv')
 
@@ -44,8 +37,8 @@ df_t = pd.read_csv('./data/labor_indicators_oecd.csv')
 
 df_tR = pd.read_csv('./data/labor_indicators_oecd.csv')
 
-#with open('./data/countries.geojson') as f:
-#    country_geo = json.load(f)
+with open('./data/countries.geojson') as f:
+    country_geo = json.load(f)
 
 qs = [x for x in df_gR['series_code'] if\
     ((df_g[df_g['indicator_code'] == x]\
@@ -65,19 +58,13 @@ temp = df_gR.iloc[qsi, :].copy().reset_index(drop = True)
 #app layout
 app.layout = html.Div(
     id = 'root',
-    style = {'background' : 'rgba(235, 232, 229, 1)', 'color' : 'CadetBlue'},
+    style = {'background' : 'rgba(235, 232, 229, 1)', 'color' : 'CadetBlue', 'font-family' : 'Gill Sans, sans-serif'},
     children = [
-        html.Div(
-            id = 'header',
-            style = {'color' : 'DimGray'},
-            children = [
-                html.H1(children = 'parental leave and health')
-            ]
-        ),
         html.Div(
             id = 'app-container',
             style = {'display' : 'flex', 'flex-direction' : 'column', 'background' : 'rgba(235, 232, 229, 1)'},
             children = [
+                html.H1(children = 'parental leave and health'),
                 html.Div(
                     id = 'upper',
                     style = {
@@ -101,13 +88,13 @@ app.layout = html.Div(
                                     children = [
                                         dcc.Dropdown(
                                             id = 'metric-selection',
-                                            style = {'background_color' : 'rgba(235, 232, 229, 1)'},
+                                            style = {'background' : 'rgba(119, 136, 153, 0.1)'},
                                             options = [
                                                 {'label' : temp.loc[i, 'indicator_name'], 'value' : temp.loc[i, 'series_code']}\
                                                 for i in range(len(temp)) if 'GDP' not in temp.loc[i, 'series_code']
                                             ] + [{'label' : 'Length of paid shared parental leave (days)', 'value' : 'SH.PAR.LEVE'},
                                                 {'label' : 'Length of paid maternity leave (days)', 'value' : 'SH.MMR.LEVE'}],
-                                            value = 'SH.MMR.LEVE'
+                                            value = 'SH.PAR.LEVE.AL'
                                         ),
                                         dcc.Slider(
                                             id = 'year-slider',
@@ -143,7 +130,6 @@ app.layout = html.Div(
                                 'display' : 'flex',
                                 'flex-direction' : 'column',
                                 'width' : '35%',
-                                'background_color' : 'rgba(221, 212, 202, 1)'
                             },
                             children = [
                                 html.Div(
@@ -151,7 +137,6 @@ app.layout = html.Div(
                                     children = [
                                         html.Div(
                                             id = 'up-split',
-                                            style = {'background_color' : 'rgba(212, 212, 202, 1)'},
                                             children = [
                                                 dcc.Graph(id = 'upper-g')
                                             ]
@@ -183,8 +168,22 @@ app.layout = html.Div(
                                 'width' : '20%'
                             },
                             children = [
-                                html.Div(id = 'country-name'),
-                                html.Div(id = 'country-facts')
+                                html.Div(
+                                    id = 'country-name',
+                                    style = {
+                                        'padding-left' : '10px'
+                                    }
+                                ),
+                                html.Div(
+                                    id = 'country-facts',
+                                    style = {
+                                        'background' : 'rgba(119, 136, 153, 0.1)',
+                                        'padding-left' : '20px',
+                                        'padding-right' : '10px',
+                                        'padding-top' : '10px',
+                                        'height' : '235px'
+                                    }
+                                )
                             ]
                         ),
                         html.Div(
@@ -225,6 +224,7 @@ app.layout = html.Div(
                             children = [
                                 dcc.Dropdown(
                                     id = 'graph-selector',
+                                    style = {'background' : 'rgba(119, 136, 153, 0.1)'},
                                     options = [
                                         {'label' : temp.loc[i, 'indicator_name'], 'value' : temp.loc[i, 'series_code']}
                                         for i in range(len(temp)) if not any(x in temp.loc[i, 'series_code'] for x in ['GDP', 'SG', 'SH.MMR', 'SH.PAR'])
@@ -271,24 +271,24 @@ def slide_range(metric):
 def update_map(metric, year):
     dff = df_g[df_g['indicator_code'] == metric][['country_code', str(year)]]
 
-    trace = go.Choropleth(
+    trace = go.Choroplethmapbox(
+                geojson = country_geo,
                 locations = dff['country_code'],
+                featureidkey = 'properties.ISO_A3',
                 z = dff[str(year)],
-                colorscale = 'Bluyl',
+                colorscale = [[0, 'rgba(146, 121, 180, 0.5)'], [1, 'rgba(95, 158, 160, 0.5)']],
                 autocolorscale = False,
-                marker_line_color = 'white'
+                colorbar = {
+                    'bgcolor' : 'rgba(235, 232, 229, 1)',
+                    'x' : 1
+                }
     )
     return {'data' : [trace],
         'layout' : go.Layout(
-            geo = {
-                'showframe' : False,
-                'projection' : {
-                    'type' : 'miller'
-                }
-            },
-            geo_bgcolor = 'rgba(235, 232, 229, 1)',
-            plot_bgcolor = 'rgba(235, 232, 229, 1)',
-            paper_bgcolor = 'rgba(235, 232, 229, 1)',
+            mapbox_style = 'mapbox://styles/dpfay/ckhegv94k09bc19lk7sqc8q0t',
+            mapbox_accesstoken = 'pk.eyJ1IjoiZHBmYXkiLCJhIjoiY2toY2hsMmVpMDh5MDJzczJhZGQ0ZWFqZyJ9.jdNjGx-xr_KqF0aFYAoSRw',
+            mapbox_zoom = 0.8,
+            mapbox_center = {'lat' : 17, 'lon' : 10},
             margin = {'l' : 0, 'r' : 0, 'b' : 0, 't' : 0}
         )
     }
@@ -587,6 +587,8 @@ def get_timed(metric, click):
     dpl = dpl[dpl['IND'] == 'EMP18_MAT'].set_index('TIME')
     yrs = list(dpl.index)
 
+#all deltas below have been constructed in order to place markers
+#on the time-graph figure at points where policy-specific change occurred
     mat_delta = dict([])
     for i in range(len(yrs) - 1):
         a = dpl.loc[yrs[i], 'Value']
@@ -644,13 +646,14 @@ def get_timed(metric, click):
         y = list(dff.loc[metric, :].values),
         mode = 'lines',
         line = dict(
-            width = 4
+            width = 4,
+            color = 'CadetBlue'
         )
     ))
     tg.update_layout(showlegend = False,
-        plot_bgcolor = 'rgba(235, 232, 229, 1)',
-        paper_bgcolor = 'rgba(235, 232, 229, 1)',
-        height = 325,
+        plot_bgcolor = 'rgba(119, 136, 153, 0.01)',
+        paper_bgcolor = 'rgba(119, 136, 153, 0.07)',
+        height = 290,
         margin = {'l' : 0, 'r' : 0, 'b' : 0, 't' : 10},
         xaxis = {'visible' : True},
         yaxis = {'visible' : False},)
@@ -690,8 +693,39 @@ def side_gs(metric, year):
             lg.add_trace(go.Bar(
                 x = [ng.loc[i, 'country_name']],
                 y = [ng.loc[i, str(year)]],
-                marker_color = 'LightSlateGray'
+                marker_color = 'rgba(146, 121, 180, 1)'
             ))
+
+        ug.update_layout(
+            annotations = [
+                {'text' : 'highest GDP countries with ' \
+                + ' '.join(df_gR[df_gR['series_code'] == metric]['indicator_name'].values[0].split()[2:-2]),
+                'x' : 0,
+                'y' : 0,
+                'showarrow' : False,
+                'xanchor' : 'left',
+                'yanchor' : 'top',
+                'xref' : 'paper',
+                'yref' : 'paper'
+                }
+            ]
+        )
+
+        lg.update_layout(
+            annotations = [
+                {'text' : 'highest GDP countries without ' \
+                + ' '.join(df_gR[df_gR['series_code'] == metric]['indicator_name'].values[0].split()[2:-2]),
+                'x' : 0,
+                'y' : 0,
+                'showarrow' : False,
+                'xanchor' : 'left',
+                'yanchor' : 'top',
+                'xref' : 'paper',
+                'yref' : 'paper'
+                }
+            ]
+        )
+
 
     else:
         top = dff[['country_name', 'country_code', str(year)]].sort_values(by = str(year), ascending = False).dropna().reset_index(drop = True)[:10]
@@ -710,15 +744,46 @@ def side_gs(metric, year):
             lg.add_trace(go.Bar(
                 x = [btm.loc[i, 'country_name']],
                 y = [btm.loc[i, str(year)]],
-                marker_color = 'LightSlateGray'
+                marker_color = 'rgba(146, 121, 180, 1)'
             ))
+        ug.update_layout(
+            annotations = [
+                {'text' : 'countries with highest ' \
+                + df_gR[df_gR['series_code'] == metric]['indicator_name'].values[0].lower(),
+                'x' : 0,
+                'y' : 0,
+                'showarrow' : False,
+                'xanchor' : 'left',
+                'yanchor' : 'top',
+                'xref' : 'paper',
+                'yref' : 'paper'
+                }
+            ]
+        )
+
+        lg.update_layout(
+            annotations = [
+                {'text' : 'countries with lowest ' \
+                + df_gR[df_gR['series_code'] == metric]['indicator_name'].values[0].lower(),
+                'x' : 0,
+                'y' : 0,
+                'showarrow' : False,
+                'xanchor' : 'left',
+                'yanchor' : 'top',
+                'xref' : 'paper',
+                'yref' : 'paper'
+                }
+            ]
+        )
+
+
 
     ug.update_layout(
         showlegend = False,
         plot_bgcolor = 'rgba(235, 232, 229, 1)',
         paper_bgcolor = 'rgba(235, 232, 229, 1)',
         height = 295,
-        margin = {'l' : 32, 'r' : 0, 'b' : 0, 't' : 75},
+        margin = {'l' : 32, 'r' : 0, 'b' : 20, 't' : 75},
         xaxis = {'visible' : False},
         yaxis = {'visible' : False}
     )
@@ -728,7 +793,7 @@ def side_gs(metric, year):
         plot_bgcolor = 'rgba(235, 232, 229, 1)',
         paper_bgcolor = 'rgba(235, 232, 229, 1)',
         height = 220,
-        margin = {'l' : 32, 'r' : 0, 'b' : 0, 't' : 0},
+        margin = {'l' : 32, 'r' : 0, 'b' : 20, 't' : 0},
         xaxis = {'visible' : False},
         yaxis = {'visible' : False}
     )
